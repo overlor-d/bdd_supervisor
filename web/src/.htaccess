@@ -1,18 +1,24 @@
 RewriteEngine On
 
-# 1. Si la requête d'origine contient ".php" dans l'URL, renvoyer une erreur 404.
+# Bloquer toute requête contenant ".php" dans l'URL d'origine
 RewriteCond %{THE_REQUEST} \s/.*\.php[?\s] [NC]
 RewriteRule ^ - [R=404,L]
 
-# 2. Réécritures internes pour les URL propres.
-# Ces règles ne modifient pas l'URL affichée, elles redirigent en interne vers les fichiers correspondants.
+# Réécritures internes pour URL propres
 RewriteRule ^$ index.php [L,QSA]
 RewriteRule ^login/?$ login.php [L,QSA]
 RewriteRule ^register/?$ register.php [L,QSA]
 RewriteRule ^dashboard/?$ dashboard.php [L,QSA]
 RewriteRule ^error/?$ error.php [L,QSA]
+RewriteRule ^get_table/?$ get_table.php [L,QSA]
+RewriteRule ^ajax_new_table/?$ ajax_new_table.php [L,QSA]
+RewriteRule ^delete_table/?$ delete_table.php [L,QSA]
+RewriteRule ^edit_table/?$ edit_table.php [L,QSA]
+RewriteRule ^ajax_add_row/?$ ajax_add_row.php [L,QSA]
+RewriteRule ^ajax_edit_row/?$ ajax_edit_row.php [L,QSA]
+RewriteRule ^ajax_delete_row/?$ ajax_delete_row.php [L,QSA]
+RewriteRule ^ajax_sql_query/?$ ajax_sql_query.php [L,QSA]
 
-# 3. Protection d'accès aux fichiers sensibles.
 <FilesMatch "^(config\.php|manage\.sh)$">
     Order Deny,Allow
     Deny from all
