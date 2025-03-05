@@ -46,9 +46,7 @@ function build() {
 
 # Purge totale : suppression des conteneurs et des volumes (et donc de la BDD persistante)
 function purge() {
-  echo "Purge complète : suppression des conteneurs et des volumes..."
   docker-compose -f "$COMPOSE_FILE" down -v
-  echo "Les conteneurs et les volumes ont été supprimés."
 }
 
 function purge_db() {  
