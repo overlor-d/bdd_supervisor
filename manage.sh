@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Fichier: manage.sh
-# Ce script permet de gérer les conteneurs Docker via docker-compose.
-# Usage: ./manage.sh {start|stop|restart|status|logs}
+# Ce script permet de gérer les conteneurs Docker via docker-compose pour les services MySQL et Web.
+# Usage: ./manage.sh {start|stop|restart|status|logs|build}
 
 COMPOSE_FILE="docker-compose.yml"
 
@@ -34,8 +34,14 @@ function logs() {
   docker-compose -f "$COMPOSE_FILE" logs -f
 }
 
+function build() {
+  echo "Construction des images..."
+  docker-compose -f "$COMPOSE_FILE" build
+  echo "Construction terminée."
+}
+
 function usage() {
-  echo "Usage: $0 {start|stop|restart|status|logs}"
+  echo "Usage: $0 {start|stop|restart|status|logs|build}"
   exit 1
 }
 
@@ -59,8 +65,10 @@ case "$1" in
   logs)
     logs
     ;;
+  build)
+    build
+    ;;
   *)
     usage
     ;;
 esac
-
