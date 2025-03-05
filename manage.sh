@@ -2,7 +2,7 @@
 
 # Fichier: manage.sh
 # Ce script permet de gérer les conteneurs Docker via docker-compose pour les services MySQL et Web.
-# Usage: ./manage.sh {start|stop|restart|status|logs|build}
+# Usage: ./manage.sh {start|stop|restart|status|logs|build|purge}
 
 COMPOSE_FILE="docker-compose.yml"
 
@@ -40,8 +40,14 @@ function build() {
   echo "Construction terminée."
 }
 
+function purge() {
+  echo "Purge complète : suppression des conteneurs et des volumes..."
+  docker-compose -f "$COMPOSE_FILE" down -v
+  echo "Les conteneurs et les volumes ont été supprimés."
+}
+
 function usage() {
-  echo "Usage: $0 {start|stop|restart|status|logs|build}"
+  echo "Usage: $0 {start|stop|restart|status|logs|build|purge}"
   exit 1
 }
 
@@ -67,6 +73,9 @@ case "$1" in
     ;;
   build)
     build
+    ;;
+  purge)
+    purge
     ;;
   *)
     usage
