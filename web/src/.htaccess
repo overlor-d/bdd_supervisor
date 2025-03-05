@@ -1,0 +1,19 @@
+RewriteEngine On
+
+# 1. Si la requête d'origine contient ".php" dans l'URL, renvoyer une erreur 404.
+RewriteCond %{THE_REQUEST} \s/.*\.php[?\s] [NC]
+RewriteRule ^ - [R=404,L]
+
+# 2. Réécritures internes pour les URL propres.
+# Ces règles ne modifient pas l'URL affichée, elles redirigent en interne vers les fichiers correspondants.
+RewriteRule ^$ index.php [L,QSA]
+RewriteRule ^login/?$ login.php [L,QSA]
+RewriteRule ^register/?$ register.php [L,QSA]
+RewriteRule ^dashboard/?$ dashboard.php [L,QSA]
+RewriteRule ^error/?$ error.php [L,QSA]
+
+# 3. Protection d'accès aux fichiers sensibles.
+<FilesMatch "^(config\.php|manage\.sh)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>

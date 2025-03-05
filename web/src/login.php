@@ -3,7 +3,7 @@
 require_once 'config.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: index.php');
+    header('Location: /');
     exit;
 }
 
@@ -20,18 +20,18 @@ if ($user && $user['password'] === $password) {
     $_SESSION['logged_in'] = true;
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['username'] = $user['username'];
-    
-    // Si les identifiants sont par défaut, rediriger vers register.php
+
+    // Si les identifiants sont par défaut, rediriger vers register
     if ($username === 'admin' && $password === 'admin') {
-        header('Location: register.php');
+        header('Location: /register');
         exit;
     } else {
-        header('Location: dashboard.php');
+        header('Location: /dashboard');
         exit;
     }
 } else {
-    // Authentification échouée, redirection avec message d'erreur
-    header('Location: index.php?error=1');
+    // Échec : rediriger vers index avec un paramètre d'erreur
+    header('Location: /?error=1');
     exit;
 }
 ?>

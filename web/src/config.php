@@ -1,10 +1,29 @@
 <?php
 // config.php
+
+// Désactivation de l'affichage des erreurs pour l'utilisateur
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
+// Gestionnaires d'erreurs personnalisés
+function customErrorHandler($errno, $errstr, $errfile, $errline) {
+    error_log("[$errno] $errstr in $errfile on line $errline");
+    header("Location: /error");
+    exit;
+}
+set_error_handler("customErrorHandler");
+
+function customExceptionHandler($exception) {
+    error_log($exception);
+    header("Location: /error");
+    exit;
+}
+set_exception_handler("customExceptionHandler");
+
 session_start();
 
-// Paramètres de connexion : 
-// - L'hôte correspond au nom du service MySQL défini dans docker-compose
-$host = 'bdd-mysql';
+// Paramètres de connexion à la BDD
+$host = 'bdd-mysql'; // Nom du service défini dans docker-compose
 $db   = 'ma_base';
 $user = 'admin';
 $pass = 'admin';
@@ -19,7 +38,7 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-    echo "Erreur de connexion à la base de données : " . $e->getMessage();
+    header("Location: /error");
     exit;
 }
 ?>

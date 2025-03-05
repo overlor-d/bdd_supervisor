@@ -2,7 +2,7 @@
 // index.php
 require_once 'config.php';
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-    header('Location: dashboard.php');
+    header('Location: /dashboard');
     exit;
 }
 ?>
@@ -11,7 +11,6 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 <head>
     <meta charset="UTF-8">
     <title>Connexion</title>
-    <!-- Bootstrap via CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="d-flex justify-content-center align-items-center vh-100">
@@ -22,7 +21,8 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
             echo "<div class='alert alert-danger'>Identifiants invalides.</div>";
         }
         ?>
-        <form action="login.php" method="post">
+        <!-- Action définie sur /login pour utiliser la réécriture interne -->
+        <form action="/login" method="post">
             <div class="mb-3">
                 <label for="username" class="form-label">Nom d'utilisateur</label>
                 <input type="text" class="form-control" id="username" name="username" required autofocus>

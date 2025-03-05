@@ -5,7 +5,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header('Location: index.php');
     exit;
 }
-
+    
 // Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_username = trim($_POST['new_username'] ?? '');
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Mise à jour de la session
         $_SESSION['username'] = $new_username;
 
-        header('Location: dashboard.php');
+        header('Location: /dashboard');
         exit;
     } else {
         $error = "Veuillez remplir tous les champs.";
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="card p-4">
         <h2 class="card-title text-center">Modifier vos identifiants</h2>
         <?php if (isset($error)) echo "<div class='alert alert-danger'>$error</div>"; ?>
-        <form action="register.php" method="post">
+        <form action="/register" method="post">
             <div class="mb-3">
                 <label for="new_username" class="form-label">Nouveau nom d'utilisateur</label>
                 <input type="text" class="form-control" id="new_username" name="new_username" required autofocus>
