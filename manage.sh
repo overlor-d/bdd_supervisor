@@ -2,7 +2,11 @@
 
 # Fichier: manage.sh
 # Ce script permet de gérer les conteneurs Docker via docker-compose pour les services MySQL et Web.
-# Usage: ./manage.sh {start|stop|restart|status|logs|build|purge}
+# Usage: ./manage.sh {start|stop|restart|status|logs|build|purge|purge-db}
+#
+# Les options sont :
+# - purge : arrête et supprime conteneurs et volumes (donc purge totale de l'environnement)
+# - purge-db : réalise une sauvegarde de la base, la compresse en .zip, puis purgue la BDD (DROP puis recréation) sans arrêter les conteneurs
 
 COMPOSE_FILE="docker-compose.yml"
 
@@ -40,14 +44,26 @@ function build() {
   echo "Construction terminée."
 }
 
+# Purge totale : suppression des conteneurs et des volumes (et donc de la BDD persistante)
 function purge() {
   echo "Purge complète : suppression des conteneurs et des volumes..."
   docker-compose -f "$COMPOSE_FILE" down -v
   echo "Les conteneurs et les volumes ont été supprimés."
 }
 
+function purge_db() {  
+  echo "Purge de la base de données en cours..."
+  purge
+  sudo rm -rf "mysql_data"
+  echo "Purge de la base effectuée"
+
+  echo "Recréation de la bdd"
+  build
+  start
+}
+
 function usage() {
-  echo "Usage: $0 {start|stop|restart|status|logs|build|purge}"
+  echo "Usage: $0 {start|stop|restart|status|logs|build|purge|purge-db}"
   exit 1
 }
 
@@ -76,6 +92,9 @@ case "$1" in
     ;;
   purge)
     purge
+    ;;
+  purge-db)
+    purge_db
     ;;
   *)
     usage
