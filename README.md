@@ -1,111 +1,125 @@
-# 🐳 MySQL Dynamic Manager – Superviseur multi-instances
+# 🐳 MySQL Manager - Gestionnaire Multi-Instances Docker
 
-Un outil shell simple et évolutif pour créer, superviser et gérer plusieurs instances de bases de données **MySQL sous Docker**, avec génération automatique de ports, fichiers de configuration et compatibilité future avec une API web (Flask, etc.).
-
----
-
-## ✅ Objectif
-
-Gérer dynamiquement plusieurs bases MySQL sur un même hôte, sans conflits, sans fichiers manuels à modifier, et sans interface graphique. Idéal pour le développement, les tests, ou des environnements isolés.
+Un outil en ligne de commande complet pour créer, déployer, superviser et sauvegarder dynamiquement des instances MySQL dans des conteneurs Docker. Idéal pour les devs, les environnements de test ou la gestion multi-projets.
 
 ---
 
-## 📦 Fonctionnalités principales
+## ✅ Fonctionnalités principales
 
-- Création automatisée d’instances MySQL (port, container, volume, fichiers)
-- Isolation parfaite entre les bases
-- Commandes shell simples et documentées
-- Structure de fichiers prête pour une intégration future en API (Flask)
-- Sauvegardes SQL faciles
-- Aucun service exposé publiquement (accès par VPN ou tunnel SSH)
+- Initialisation automatique de l'environnement local
+- Gestion centralisée via une base SQLite (plus de fichiers `.env` partout)
+- Création, démarrage, arrêt, suppression, sauvegarde de bases
+- Attribution automatique de ports entre 3300 et 3350
+- Conteneurs, ports et volumes totalement isolés
+- Sauvegardes SQL générées dans `~/.mysql-manager/backups`
 
 ---
 
 ## 📁 Structure du projet
 
-```
+```bash
 mysql-manager/
-├── core/                        # Scripts de gestion
-│   ├── manage_instance.sh       # Gère une instance unique
-│   ├── supervisor.sh            # Orchestrateur multi-instance
-│   └── utils.sh                 # Fonctions communes (env, ports...)
+├── core/                     # Scripts principaux
+│   ├── supervisor.sh         # CLI principale (point d'entrée)
+│   ├── manage_instance.sh    # Gestion d'une instance à partir de la BDD
+│   ├── utils.sh              # Fonctions partagées
+│   └── schema.sql            # Schéma de la base SQLite
 │
-├── instances/                   # Une base = un dossier avec sa config
-│   └── mydb/
-│       ├── .env
-│       └── .meta.json
+├── templates/
+│   └── docker-compose.yml    # Docker Compose de base
 │
-├── backups/                     # Dumps SQL horodatés
-├── templates/                   # docker-compose.yml de base
+├── install/
+│   └── init_packages.sh      # Installation des dépendances (Docker, jq...)
+│
+├── data/
+│   └── db.sqlite3            # Base locale (générée par `init`)
+│
+├── backups/                  # Contient les exports SQL (.sql)
 └── README.md
 ```
 
 ---
 
-## 🛠️ Commandes du superviseur (`supervisor.sh`)
+## 🛠 Installation et initialisation
 
-| Commande | Description |
-|----------|-------------|
-| `create <name>` | Crée une nouvelle instance avec prompts interactifs |
-| `list` | Liste toutes les bases gérées |
-| `start <name>` | Démarre l’instance `<name>` |
-| `stop <name>` | Arrête l’instance `<name>` |
-| `purge <name>` | Supprime le conteneur, le volume et les métadonnées |
-| `backup <name>` | Sauvegarde la base en `.sql` |
-| `info <name>` | Affiche les détails d'une instance |
-| `logs <name>` | Affiche les logs du conteneur |
-| `help` | Rappelle les commandes disponibles |
+### 1. Cloner le projet
+```bash
+git clone https://github.com/ton_user/mysql-manager.git
+cd mysql-manager
+```
+
+### 2. Lancer l'initialisation
+```bash
+./core/supervisor.sh init
+```
+Cette commande :
+- Vérifie les dépendances (`docker`, `jq`, `sqlite3`)
+- Crée `~/.mysql-manager/` et la base SQLite
+- Te propose de créer une première instance
 
 ---
 
-## 🔄 Fichiers utilisés
+## 🚀 Commandes disponibles
 
-### `.env` – Configuration utilisateur
-Contient les variables nécessaires pour déployer l’instance MySQL.
-
-```env
-MYSQL_ROOT_PASSWORD=supersecret
-MYSQL_DATABASE=mydb
-MYSQL_USER=admin
-MYSQL_PASSWORD=adminpass
-```
-
-### `.meta.json` – Métadonnées système (généré automatiquement)
-Contient le port attribué, le nom du conteneur, le statut, etc.
-
-```json
-{
-  "name": "mydb",
-  "port": 3307,
-  "container": "mysql_db_mydb",
-  "volume": "mysql_data_mydb",
-  "status": "running"
-}
+```bash
+./core/supervisor.sh init          # Initialise le projet
+./core/supervisor.sh create        # Crée une nouvelle instance (interactif)
+./core/supervisor.sh list          # Liste toutes les instances gérées
+./core/supervisor.sh start <nom>  # Démarre une instance
+./core/supervisor.sh stop <nom>   # Arrête une instance
+./core/supervisor.sh logs <nom>   # Affiche les logs du conteneur
+./core/supervisor.sh status <nom> # Affiche l'état du conteneur
+./core/supervisor.sh backup <nom> # Sauvegarde la base en SQL
+./core/supervisor.sh purge <nom>  # Supprime une instance (conteneur + volume + métadonnées)
 ```
 
 ---
 
 ## 🔒 Sécurité
 
-- Aucun port ouvert publiquement par défaut
-- Connexion via VPN, SSH ou tunnel
-- Compatible avec des outils comme **MySQL Workbench**, **DBeaver**, etc.
+- Toutes les informations sont stockées dans `~/.mysql-manager/db.sqlite3`
+- Aucun mot de passe en clair dans des fichiers `env` suivis par Git
+- Connexion uniquement en local ou via VPN / SSH
 
 ---
 
-## 📌 Pré-requis
+## 🧪 Exemple de test rapide
 
-- Docker + Docker Compose
-- Bash 4+
-- `jq` (pour gérer les fichiers JSON)
+```bash
+./core/supervisor.sh create
+./core/supervisor.sh start nom-instance
+./core/supervisor.sh list
+mysql -u user -p -h 127.0.0.1 -P <port>
+./core/supervisor.sh backup nom-instance
+./core/supervisor.sh stop nom-instance
+./core/supervisor.sh purge nom-instance
+```
 
 ---
 
-## 🧱 Roadmap
+## 🧼 .gitignore recommandé
 
-- [x] Shell complet multi-instance
-- [ ] Intégration API Flask
-- [ ] Interface web sécurisée
-- [ ] Gestion multi-utilisateur (auth, droits)
-- [ ] Exports/Imports portables
+```gitignore
+.env
+*.env
+*.override.yml
+*.log
+*.sqlite3
+*.sql
+backups/
+~/.mysql-manager/
+```
+
+---
+
+## 💡 Prochaine évolution
+
+- Intégration d'une API Flask ou interface web
+- Export/Import d'instances
+- Ajout de support PostgreSQL
+
+---
+
+## 🧑‍💻 Auteur
+Projet développé par **@over** — libre d’utilisation et d’amélioration !
 
