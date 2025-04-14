@@ -1,125 +1,140 @@
-# 🐳 MySQL Manager - Gestionnaire Multi-Instances Docker
+# 🐳 MySQL Supervisor — Gestion dynamique d'instances MySQL via Docker
 
-Un outil en ligne de commande complet pour créer, déployer, superviser et sauvegarder dynamiquement des instances MySQL dans des conteneurs Docker. Idéal pour les devs, les environnements de test ou la gestion multi-projets.
-
----
-
-## ✅ Fonctionnalités principales
-
-- Initialisation automatique de l'environnement local
-- Gestion centralisée via une base SQLite (plus de fichiers `.env` partout)
-- Création, démarrage, arrêt, suppression, sauvegarde de bases
-- Attribution automatique de ports entre 3300 et 3350
-- Conteneurs, ports et volumes totalement isolés
-- Sauvegardes SQL générées dans `~/.mysql-manager/backups`
+Un outil en ligne de commande conçu pour créer, gérer, superviser et supprimer facilement des bases de données MySQL dans des conteneurs Docker, sans interface web. Idéal pour les développeurs ou les équipes techniques souhaitant isoler et manipuler plusieurs bases sans conflits.
 
 ---
 
-## 📁 Structure du projet
+## ✅ Fonctionnalités
 
-```bash
-mysql-manager/
-├── core/                     # Scripts principaux
-│   ├── supervisor.sh         # CLI principale (point d'entrée)
-│   ├── manage_instance.sh    # Gestion d'une instance à partir de la BDD
-│   ├── utils.sh              # Fonctions partagées
-│   └── schema.sql            # Schéma de la base SQLite
-│
-├── templates/
-│   └── docker-compose.yml    # Docker Compose de base
-│
+- Déploiement d'instances MySQL isolées via Docker
+- Attribution dynamique de ports (pas de conflits)
+- Sauvegarde et purge complète d'instances
+- Stockage local des configurations via SQLite
+- Aucune interface exposée : usage via tunnel/VPN
+- Sécurité locale : mots de passe, volumes, droits POSIX
+- Compatible Linux, support partiel Mac (Docker Desktop)
+
+---
+
+## 📂 Arborescence du projet
+
+```
+bdd_supervisor/
+├── core/                      # Scripts principaux
+│   ├── supervisor.sh         # Point d'entrée CLI
+│   ├── manage_instance.sh    # Logique par instance
+│   └── utils.sh              # Fonctions utilitaires
 ├── install/
-│   └── init_packages.sh      # Installation des dépendances (Docker, jq...)
-│
-├── data/
-│   └── db.sqlite3            # Base locale (générée par `init`)
-│
-├── backups/                  # Contient les exports SQL (.sql)
-└── README.md
+│   └── init_packages.sh      # Script optionnel pour dépendances
+├── templates/
+│   └── docker-compose.yml    # Template de base MySQL
+├── README.md                 # Documentation
 ```
 
 ---
 
-## 🛠 Installation et initialisation
+## ⚙️ Installation & Initialisation
 
-### 1. Cloner le projet
-```bash
-git clone https://github.com/ton_user/mysql-manager.git
-cd mysql-manager
-```
-
-### 2. Lancer l'initialisation
 ```bash
 ./core/supervisor.sh init
 ```
-Cette commande :
-- Vérifie les dépendances (`docker`, `jq`, `sqlite3`)
-- Crée `~/.mysql-manager/` et la base SQLite
-- Te propose de créer une première instance
+- Crée le dossier `~/.mysql-manager`
+- Initialise une base SQLite
+- Propose de créer une première instance (nom, mots de passe, etc.)
 
 ---
 
-## 🚀 Commandes disponibles
+## 🛠️ Commandes disponibles
 
 ```bash
-./core/supervisor.sh init          # Initialise le projet
-./core/supervisor.sh create        # Crée une nouvelle instance (interactif)
-./core/supervisor.sh list          # Liste toutes les instances gérées
-./core/supervisor.sh start <nom>  # Démarre une instance
-./core/supervisor.sh stop <nom>   # Arrête une instance
-./core/supervisor.sh logs <nom>   # Affiche les logs du conteneur
-./core/supervisor.sh status <nom> # Affiche l'état du conteneur
-./core/supervisor.sh backup <nom> # Sauvegarde la base en SQL
-./core/supervisor.sh purge <nom>  # Supprime une instance (conteneur + volume + métadonnées)
+./core/supervisor.sh create          # Crée une nouvelle instance
+./core/supervisor.sh start <nom>     # Démarre une instance
+./core/supervisor.sh stop <nom>      # Stoppe une instance
+./core/supervisor.sh purge <nom>     # Supprime instance + volume + config
+./core/supervisor.sh status <nom>    # Affiche l'état Docker d'une instance
+./core/supervisor.sh logs <nom>      # Affiche les logs live
+./core/supervisor.sh backup <nom>    # Effectue un export SQL de la base
+./core/supervisor.sh list            # Affiche les instances connues
 ```
 
 ---
 
-## 🔒 Sécurité
+## 🔐 Sécurité
 
-- Toutes les informations sont stockées dans `~/.mysql-manager/db.sqlite3`
-- Aucun mot de passe en clair dans des fichiers `env` suivis par Git
-- Connexion uniquement en local ou via VPN / SSH
+- Toutes les données sont locales : pas d'exposition réseau
+- Accès à la base uniquement via localhost ou tunnel SSH/VPN
+- Aucune donnée sensible dans les fichiers publics
+- Permissions strictes appliquées sur chaque fichier créé
 
 ---
 
-## 🧪 Exemple de test rapide
+## 💾 Sauvegardes
+
+```bash
+./core/supervisor.sh backup <nom>
+```
+- Génère un dump `.sql` dans `~/.mysql-manager/backups/`
+- Format horodaté : `nom_YYYY-MM-DD_HH-MM.sql`
+
+---
+
+## 📌 Dépendances
+
+- Docker & Docker Compose
+- SQLite3 (installé par défaut sur Linux)
+- Bash (>= 4)
+
+---
+
+## 💡 Astuces & Bonnes pratiques
+
+- Utilisez un tunnel SSH ou VPN pour accéder à vos bases à distance
+- Intégrez vos backups dans une crontab pour automatiser
+- Évitez de supprimer le fichier SQLite sauf si vous repartez de zéro
+- Tous les ports sont entre 3300-3350 : vérifiez avec `docker ps`
+
+---
+
+## 🚧 Limitations connues
+
+- Non multi-utilisateur (tout est stocké dans `~/.mysql-manager`)
+- Pas encore d'interface graphique ou d'API
+- Les erreurs Docker ne sont pas toutes capturées proprement
+- Ne gère que MySQL (MariaDB potentiellement compatible)
+
+---
+
+## 📈 Roadmap
+
+- [ ] Interface web Flask optionnelle
+- [ ] Support PostgreSQL / Mongo
+- [ ] Amélioration des messages d'erreur
+- [ ] Export / import d'une configuration
+- [ ] Commande `doctor` pour diagnostic complet
+
+---
+
+## 🧪 Tests
+
+Effectuez ces commandes dans l'ordre pour valider une instance :
 
 ```bash
 ./core/supervisor.sh create
-./core/supervisor.sh start nom-instance
-./core/supervisor.sh list
-mysql -u user -p -h 127.0.0.1 -P <port>
-./core/supervisor.sh backup nom-instance
-./core/supervisor.sh stop nom-instance
-./core/supervisor.sh purge nom-instance
+./core/supervisor.sh start <nom>
+./core/supervisor.sh status <nom>
+./core/supervisor.sh logs <nom>
+./core/supervisor.sh backup <nom>
+./core/supervisor.sh stop <nom>
+./core/supervisor.sh purge <nom>
 ```
 
 ---
 
-## 🧼 .gitignore recommandé
+## 🧠 Contributeurs
 
-```gitignore
-.env
-*.env
-*.override.yml
-*.log
-*.sqlite3
-*.sql
-backups/
-~/.mysql-manager/
-```
+Projet développé pour simplifier la gestion d'environnements MySQL temporaires, reproductibles et isolés via Docker.
 
 ---
 
-## 💡 Prochaine évolution
-
-- Intégration d'une API Flask ou interface web
-- Export/Import d'instances
-- Ajout de support PostgreSQL
-
----
-
-## 🧑‍💻 Auteur
-Projet développé par **@over** — libre d’utilisation et d’amélioration !
+Pour toute suggestion ou bug : ouvrez une issue ou contactez le développeur principal.
 
