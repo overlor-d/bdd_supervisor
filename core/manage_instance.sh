@@ -89,13 +89,22 @@ start_instance() {
     rm -f "$TMP_OVERRIDE" "$TMP_ENV"
 
     sqlite3 "$DB_FILE" "UPDATE instances SET status = 'running' WHERE name = '$INSTANCE_NAME';"
-    echo "[✓] Instance '$INSTANCE_NAME' démarrée."
+    echo "[\u2713] Instance '$INSTANCE_NAME' démarrée."
 }
 
-
-
 stop_instance() {
-    docker compose -p "$INSTANCE_NAME" --env-file "$ENV_FILE" -f "$TEMPLATE_COMPOSE" -f "$OVERRIDE_COMPOSE" down
+    generate_override
+
+    TMP_OVERRIDE="$BASE_DIR/override_${INSTANCE_NAME}.yml"
+    TMP_ENV="$BASE_DIR/.env_${INSTANCE_NAME}"
+
+    cp "$OVERRIDE_COMPOSE" "$TMP_OVERRIDE"
+    cp "$ENV_FILE" "$TMP_ENV"
+
+    docker compose -p "$INSTANCE_NAME" --env-file "$TMP_ENV" -f "$TEMPLATE_COMPOSE" -f "$TMP_OVERRIDE" down
+
+    rm -f "$TMP_OVERRIDE" "$TMP_ENV"
+
     sqlite3 "$DB_FILE" "UPDATE instances SET status = 'stopped' WHERE name = '$INSTANCE_NAME';"
     echo "Instance '$INSTANCE_NAME' arrêtée."
 }
@@ -106,8 +115,20 @@ purge_instance() {
         echo "Annulé."
         exit 0
     fi
-    docker compose -p "$INSTANCE_NAME" --env-file "$ENV_FILE" -f "$TEMPLATE_COMPOSE" -f "$OVERRIDE_COMPOSE" down -v
+
+    generate_override
+
+    TMP_OVERRIDE="$BASE_DIR/override_${INSTANCE_NAME}.yml"
+    TMP_ENV="$BASE_DIR/.env_${INSTANCE_NAME}"
+
+    cp "$OVERRIDE_COMPOSE" "$TMP_OVERRIDE"
+    cp "$ENV_FILE" "$TMP_ENV"
+
+    docker compose -p "$INSTANCE_NAME" --env-file "$TMP_ENV" -f "$TEMPLATE_COMPOSE" -f "$TMP_OVERRIDE" down -v
+
+    rm -f "$TMP_OVERRIDE" "$TMP_ENV"
     rm -rf "$INSTANCE_DIR"
+
     sqlite3 "$DB_FILE" "DELETE FROM instances WHERE name = '$INSTANCE_NAME';"
     echo "Instance '$INSTANCE_NAME' supprimée (conteneur + volume)."
 }
