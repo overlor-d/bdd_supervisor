@@ -1,0 +1,10 @@
+services:
+  mysql:
+    container_name: mysql_db_test1
+    ports:
+      - "3300:3306"
+    volumes:
+      - mysql_data_test1:/var/lib/mysql
+
+volumes:
+  mysql_data_test1:

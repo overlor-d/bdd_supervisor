@@ -1,1 +1,34 @@
+# === ENVIRONNEMENT ===
 .env
+*.env
+*.override.yml
+*.log
+
+# === SQLITE ===
+*.sqlite3
+*.sqlite3-journal
+*.db
+*.db-journal
+
+# === FICHIERS GÉNÉRÉS PAR LE SCRIPT ===
+~/.mysql-manager/
+core/instances/
+core/**/*.override.yml
+core/**/*.env
+
+# === BACKUPS ===
+backups/
+*.sql
+
+# === SYSTEME ===
+.DS_Store
+Thumbs.db
+
+# === TEMP ===
+*.swp
+*.swo
+*.bak
+*~
+
+# === DOCKER ===
+**/docker-compose.override.yml
