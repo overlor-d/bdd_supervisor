@@ -34,8 +34,17 @@ VOLUME_NAME=$(read_sqlite_value "volume_name")
 
 INSTANCE_DIR="$INSTALL_DIR/instances/$INSTANCE_NAME"
 mkdir -p "$INSTANCE_DIR"
+chmod 700 "$INSTANCE_DIR"
+chown "$USER:$USER" "$INSTANCE_DIR"
+
 OVERRIDE_COMPOSE="$INSTANCE_DIR/docker-compose.override.yml"
 ENV_FILE="$INSTANCE_DIR/.env"
+
+# Prépare le fichier .env avec les bons droits
+rm -f "$ENV_FILE"
+touch "$ENV_FILE"
+chmod 600 "$ENV_FILE"
+chown "$USER:$USER" "$ENV_FILE"
 
 # Génère le fichier .env pour docker-compose
 cat > "$ENV_FILE" <<EOF
@@ -59,17 +68,34 @@ services:
 volumes:
   ${VOLUME_NAME}:
 EOF
+
+    chmod 644 "$OVERRIDE_COMPOSE"
+    chown "$USER:$USER" "$OVERRIDE_COMPOSE"
 }
 
 start_instance() {
     generate_override
-    docker compose --env-file "$ENV_FILE" -f "$TEMPLATE_COMPOSE" -f "$OVERRIDE_COMPOSE" up -d
+
+    export $(grep -v '^#' "$ENV_FILE" | xargs)
+
+    TMP_OVERRIDE="$BASE_DIR/override_${INSTANCE_NAME}.yml"
+    TMP_ENV="$BASE_DIR/.env_${INSTANCE_NAME}"
+
+    cp "$OVERRIDE_COMPOSE" "$TMP_OVERRIDE"
+    cp "$ENV_FILE" "$TMP_ENV"
+
+    docker compose -p "$INSTANCE_NAME" --env-file "$TMP_ENV" -f "$TEMPLATE_COMPOSE" -f "$TMP_OVERRIDE" up -d
+
+    rm -f "$TMP_OVERRIDE" "$TMP_ENV"
+
     sqlite3 "$DB_FILE" "UPDATE instances SET status = 'running' WHERE name = '$INSTANCE_NAME';"
-    echo "Instance '$INSTANCE_NAME' démarrée."
+    echo "[✓] Instance '$INSTANCE_NAME' démarrée."
 }
 
+
+
 stop_instance() {
-    docker compose --env-file "$ENV_FILE" -f "$TEMPLATE_COMPOSE" -f "$OVERRIDE_COMPOSE" down
+    docker compose -p "$INSTANCE_NAME" --env-file "$ENV_FILE" -f "$TEMPLATE_COMPOSE" -f "$OVERRIDE_COMPOSE" down
     sqlite3 "$DB_FILE" "UPDATE instances SET status = 'stopped' WHERE name = '$INSTANCE_NAME';"
     echo "Instance '$INSTANCE_NAME' arrêtée."
 }
@@ -80,7 +106,7 @@ purge_instance() {
         echo "Annulé."
         exit 0
     fi
-    docker compose --env-file "$ENV_FILE" -f "$TEMPLATE_COMPOSE" -f "$OVERRIDE_COMPOSE" down -v
+    docker compose -p "$INSTANCE_NAME" --env-file "$ENV_FILE" -f "$TEMPLATE_COMPOSE" -f "$OVERRIDE_COMPOSE" down -v
     rm -rf "$INSTANCE_DIR"
     sqlite3 "$DB_FILE" "DELETE FROM instances WHERE name = '$INSTANCE_NAME';"
     echo "Instance '$INSTANCE_NAME' supprimée (conteneur + volume)."
@@ -128,3 +154,4 @@ case "$COMMAND" in
     exit 1
     ;;
 esac
+
