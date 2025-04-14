@@ -1,7 +1,0 @@
-{
-  "name": "test1",
-  "port": 3300,
-  "container": "mysql_db_test1",
-  "volume": "mysql_data_test1",
-  "status": "running"
-}

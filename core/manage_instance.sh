@@ -3,43 +3,56 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BASE_DIR="$SCRIPT_DIR/.."
+INSTALL_DIR="$HOME/.mysql-manager"
+DB_FILE="$INSTALL_DIR/db.sqlite3"
+TEMPLATE_COMPOSE="$BASE_DIR/templates/docker-compose.yml"
+
 source "$SCRIPT_DIR/utils.sh"
 
-# Vérifie que le dossier de l'instance existe
-if [ -z "$2" ] || [ ! -d "$2" ]; then
-    echo "Erreur : dossier d'instance invalide ou manquant."
-    echo "Usage: $0 <commande> <instance_dir>"
+COMMAND="$1"
+INSTANCE_NAME="$2"
+
+if [ -z "$INSTANCE_NAME" ]; then
+    echo "Usage: $0 {start|stop|purge|status|logs|backup} <instance_name>"
     exit 1
 fi
 
-COMMAND="$1"
-INSTANCE_DIR="$2"
-ENV_FILE="${INSTANCE_DIR}/.env"
-META_FILE="${INSTANCE_DIR}/.meta.json"
-BASE_COMPOSE="${SCRIPT_DIR}/../templates/docker-compose.yml"
-OVERRIDE_COMPOSE="${INSTANCE_DIR}/docker-compose.override.yml"
+# Récupère les infos depuis SQLite
+read_sqlite_value() {
+    local field="$1"
+    sqlite3 "$DB_FILE" "SELECT $field FROM instances WHERE name = '$INSTANCE_NAME';"
+}
 
-# Charge les infos nécessaires
-DB_NAME=$(load_env_var "$ENV_FILE" "MYSQL_DATABASE")
-CONTAINER_NAME=$(get_container_name "$DB_NAME")
-VOLUME_NAME=$(get_volume_name "$DB_NAME")
+DB_NAME=$(read_sqlite_value "db_name")
+DB_USER=$(read_sqlite_value "db_user")
+DB_PASS=$(read_sqlite_value "db_password")
+ROOT_PASS=$(read_sqlite_value "root_password")
+PORT=$(read_sqlite_value "port")
+CONTAINER_NAME=$(read_sqlite_value "container_name")
+VOLUME_NAME=$(read_sqlite_value "volume_name")
+
+INSTANCE_DIR="$INSTALL_DIR/instances/$INSTANCE_NAME"
+mkdir -p "$INSTANCE_DIR"
+OVERRIDE_COMPOSE="$INSTANCE_DIR/docker-compose.override.yml"
+ENV_FILE="$INSTANCE_DIR/.env"
+
+# Génère le fichier .env pour docker-compose
+cat > "$ENV_FILE" <<EOF
+MYSQL_ROOT_PASSWORD=$ROOT_PASS
+MYSQL_DATABASE=$DB_NAME
+MYSQL_USER=$DB_USER
+MYSQL_PASSWORD=$DB_PASS
+EOF
 
 # Génère docker-compose.override.yml
-function generate_override() {
-    local port
-    if [ -f "$META_FILE" ]; then
-        port=$(read_meta_value "$INSTANCE_DIR" "port")
-    else
-        port=$(find_free_port)
-        create_meta_json "$INSTANCE_DIR" "$port" "stopped"
-    fi
-
+generate_override() {
     cat > "$OVERRIDE_COMPOSE" <<EOF
 services:
   mysql:
     container_name: ${CONTAINER_NAME}
     ports:
-      - "${port}:3306"
+      - "${PORT}:3306"
     volumes:
       - ${VOLUME_NAME}:/var/lib/mysql
 
@@ -48,48 +61,45 @@ volumes:
 EOF
 }
 
-function start_instance() {
+start_instance() {
     generate_override
-    docker compose --env-file "$ENV_FILE" -f "$BASE_COMPOSE" -f "$OVERRIDE_COMPOSE" up -d
-    create_meta_json "$INSTANCE_DIR" "$(read_meta_value "$INSTANCE_DIR" "port")" "running"
-    echo "Instance '${DB_NAME}' démarrée."
+    docker compose --env-file "$ENV_FILE" -f "$TEMPLATE_COMPOSE" -f "$OVERRIDE_COMPOSE" up -d
+    sqlite3 "$DB_FILE" "UPDATE instances SET status = 'running' WHERE name = '$INSTANCE_NAME';"
+    echo "Instance '$INSTANCE_NAME' démarrée."
 }
 
-function stop_instance() {
-    docker compose --env-file "$ENV_FILE" -f "$BASE_COMPOSE" -f "$OVERRIDE_COMPOSE" down
-    create_meta_json "$INSTANCE_DIR" "$(read_meta_value "$INSTANCE_DIR" "port")" "stopped"
-    echo "Instance '${DB_NAME}' arrêtée."
+stop_instance() {
+    docker compose --env-file "$ENV_FILE" -f "$TEMPLATE_COMPOSE" -f "$OVERRIDE_COMPOSE" down
+    sqlite3 "$DB_FILE" "UPDATE instances SET status = 'stopped' WHERE name = '$INSTANCE_NAME';"
+    echo "Instance '$INSTANCE_NAME' arrêtée."
 }
 
-function purge_instance() {
-    read -p "Supprimer définitivement l'instance '${DB_NAME}' ? (y/N): " confirm
+purge_instance() {
+    read -p "Supprimer définitivement l'instance '$INSTANCE_NAME' ? (y/N): " confirm
     if [[ "$confirm" != "y" ]]; then
         echo "Annulé."
         exit 0
     fi
-
-    docker compose --env-file "$ENV_FILE" -f "$BASE_COMPOSE" -f "$OVERRIDE_COMPOSE" down -v
-    rm -f "$OVERRIDE_COMPOSE" "$META_FILE"
-    echo "Instance '${DB_NAME}' supprimée (conteneur + volume)."
+    docker compose --env-file "$ENV_FILE" -f "$TEMPLATE_COMPOSE" -f "$OVERRIDE_COMPOSE" down -v
+    rm -rf "$INSTANCE_DIR"
+    sqlite3 "$DB_FILE" "DELETE FROM instances WHERE name = '$INSTANCE_NAME';"
+    echo "Instance '$INSTANCE_NAME' supprimée (conteneur + volume)."
 }
 
-function status_instance() {
+status_instance() {
     docker ps --filter "name=${CONTAINER_NAME}"
 }
 
-function logs_instance() {
+logs_instance() {
     docker logs -f "$CONTAINER_NAME"
 }
 
-function backup_instance() {
-    local USER PASS
-    USER=$(load_env_var "$ENV_FILE" "MYSQL_USER")
-    PASS=$(load_env_var "$ENV_FILE" "MYSQL_PASSWORD")
-    local BACKUP_DIR="./backups"
+backup_instance() {
+    BACKUP_DIR="$INSTALL_DIR/backups"
     mkdir -p "$BACKUP_DIR"
     local FILE="${BACKUP_DIR}/${DB_NAME}_$(date +%F_%H-%M).sql"
     docker exec "$CONTAINER_NAME" sh -c \
-        "mysqldump -u$USER -p$PASS $DB_NAME" > "$FILE"
+        "mysqldump -u$DB_USER -p$DB_PASS $DB_NAME" > "$FILE"
     echo "Backup sauvegardé : $FILE"
 }
 
@@ -114,7 +124,7 @@ case "$COMMAND" in
     ;;
   *)
     echo "Commande inconnue : $COMMAND"
-    echo "Usage: $0 {start|stop|purge|status|logs|backup} <instance_dir>"
+    echo "Usage: $0 {start|stop|purge|status|logs|backup} <instance_name>"
     exit 1
+    ;;
 esac
-
