@@ -1,120 +1,111 @@
-# 🐳 MySQL Server Manager (Docker + Shell)
+# 🐳 MySQL Dynamic Manager – Superviseur multi-instances
 
-Un outil simple et puissant pour déployer et gérer dynamiquement des bases de données MySQL dans des conteneurs Docker, avec une configuration automatisée via un fichier `.env`.
-
----
-
-## ✅ Fonctionnalités
-
-- Création automatique de conteneurs et volumes basés sur le nom de la base (`MYSQL_DATABASE`)
-- Port et nom de conteneur générés dynamiquement (pas de conflit entre instances)
-- Démarrage / arrêt / suppression d'une base en une ligne de commande
-- Connexion sécurisée via VPN (aucune exposition publique requise)
-- Aucun besoin d’interface web : connectez-vous via MySQL Workbench, DBeaver, etc.
+Un outil shell simple et évolutif pour créer, superviser et gérer plusieurs instances de bases de données **MySQL sous Docker**, avec génération automatique de ports, fichiers de configuration et compatibilité future avec une API web (Flask, etc.).
 
 ---
 
-## 📂 Arborescence du projet
+## ✅ Objectif
+
+Gérer dynamiquement plusieurs bases MySQL sur un même hôte, sans conflits, sans fichiers manuels à modifier, et sans interface graphique. Idéal pour le développement, les tests, ou des environnements isolés.
+
+---
+
+## 📦 Fonctionnalités principales
+
+- Création automatisée d’instances MySQL (port, container, volume, fichiers)
+- Isolation parfaite entre les bases
+- Commandes shell simples et documentées
+- Structure de fichiers prête pour une intégration future en API (Flask)
+- Sauvegardes SQL faciles
+- Aucun service exposé publiquement (accès par VPN ou tunnel SSH)
+
+---
+
+## 📁 Structure du projet
 
 ```
-mysql-dynamic-db/
-├── docker-compose.yml            # Base commune Docker Compose
-├── .env                          # Configuration de l'instance
-├── docker-compose.override.yml   # Généré dynamiquement par le script
-├── manage_db.sh                  # Script de gestion
+mysql-manager/
+├── core/                        # Scripts de gestion
+│   ├── manage_instance.sh       # Gère une instance unique
+│   ├── supervisor.sh            # Orchestrateur multi-instance
+│   └── utils.sh                 # Fonctions communes (env, ports...)
+│
+├── instances/                   # Une base = un dossier avec sa config
+│   └── mydb/
+│       ├── .env
+│       └── .meta.json
+│
+├── backups/                     # Dumps SQL horodatés
+├── templates/                   # docker-compose.yml de base
 └── README.md
 ```
 
 ---
 
-## ⚙️ Configuration
+## 🛠️ Commandes du superviseur (`supervisor.sh`)
 
-Crée un fichier `.env` :
+| Commande | Description |
+|----------|-------------|
+| `create <name>` | Crée une nouvelle instance avec prompts interactifs |
+| `list` | Liste toutes les bases gérées |
+| `start <name>` | Démarre l’instance `<name>` |
+| `stop <name>` | Arrête l’instance `<name>` |
+| `purge <name>` | Supprime le conteneur, le volume et les métadonnées |
+| `backup <name>` | Sauvegarde la base en `.sql` |
+| `info <name>` | Affiche les détails d'une instance |
+| `logs <name>` | Affiche les logs du conteneur |
+| `help` | Rappelle les commandes disponibles |
+
+---
+
+## 🔄 Fichiers utilisés
+
+### `.env` – Configuration utilisateur
+Contient les variables nécessaires pour déployer l’instance MySQL.
 
 ```env
-MYSQL_ROOT_PASSWORD=motdepasseUltraSolide!
-MYSQL_DATABASE=ma_base
+MYSQL_ROOT_PASSWORD=supersecret
+MYSQL_DATABASE=mydb
 MYSQL_USER=admin
-MYSQL_PASSWORD=admin_pass
+MYSQL_PASSWORD=adminpass
 ```
 
-Chaque base différente doit avoir un nom unique dans `MYSQL_DATABASE`.
+### `.meta.json` – Métadonnées système (généré automatiquement)
+Contient le port attribué, le nom du conteneur, le statut, etc.
 
----
-
-## 🛠️ Commandes disponibles
-
-Utilise le script `manage_db.sh` :
-
-```bash
-./manage_db.sh start    # Démarre le conteneur MySQL (et crée override.yml)
-./manage_db.sh stop     # Arrête le conteneur
-./manage_db.sh purge    # Supprime le conteneur + son volume de données
-./manage_db.sh status   # Affiche l'état du conteneur MySQL
-./manage_db.sh logs     # Affiche les logs MySQL
+```json
+{
+  "name": "mydb",
+  "port": 3307,
+  "container": "mysql_db_mydb",
+  "volume": "mysql_data_mydb",
+  "status": "running"
+}
 ```
 
 ---
 
-## 🔄 Changer de base de données
+## 🔒 Sécurité
 
-1. Modifie le fichier `.env` avec un nouveau nom de base, user, mot de passe
-2. Lance :
-
-```bash
-./manage_db.sh start
-```
-
-🎉 Une nouvelle instance MySQL sera automatiquement configurée avec :
-- Nom de conteneur : `mysql_db_<nom_base>`
-- Volume : `mysql_data_<nom_base>`
-- Port : généré automatiquement (dans la plage 3300–3350)
+- Aucun port ouvert publiquement par défaut
+- Connexion via VPN, SSH ou tunnel
+- Compatible avec des outils comme **MySQL Workbench**, **DBeaver**, etc.
 
 ---
 
-## 🔐 Sécurité
+## 📌 Pré-requis
 
-- Aucune interface web exposée
-- Connexion uniquement via VPN ou tunnel SSH
-- Utilise un outil desktop sécurisé : **MySQL Workbench**, **DBeaver**, **Beekeeper Studio**
-
----
-
-## 🖥️ Connexion à la base
-
-Depuis ton poste local (via VPN ou tunnel SSH) :
-
-- **Host** : IP VPN du serveur
-- **Port** : (voir `docker ps` ou script `status`)
-- **Utilisateur** : `MYSQL_USER`
-- **Mot de passe** : `MYSQL_PASSWORD`
-- **Base** : `MYSQL_DATABASE`
+- Docker + Docker Compose
+- Bash 4+
+- `jq` (pour gérer les fichiers JSON)
 
 ---
 
-## 💡 Astuces
+## 🧱 Roadmap
 
-- Gère plusieurs bases sur le même serveur sans conflit
-- Pas besoin de modifier les fichiers Compose manuellement
-- Fonctionne très bien avec des outils comme **cron** pour backups, scripts automatisés, etc.
-
----
-
-## 🚜 Nettoyage complet
-
-Si tu veux supprimer une base (conteneur + données) :
-
-```bash
-./manage_db.sh purge
-```
-
-⚠️ Cette commande supprime aussi le volume Docker, donc les données sont définitivement perdues.
-
----
-
-## 📌 TODO (facultatif)
-
-- Ajouter des scripts SQL d’init
-- Ajouter des backups automatiques
-- Dockeriser phpMyAdmin en option
+- [x] Shell complet multi-instance
+- [ ] Intégration API Flask
+- [ ] Interface web sécurisée
+- [ ] Gestion multi-utilisateur (auth, droits)
+- [ ] Exports/Imports portables
 
