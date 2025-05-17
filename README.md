@@ -16,34 +16,6 @@ Un outil en ligne de commande conçu pour créer, gérer, superviser et supprime
 
 ---
 
-## 📂 Arborescence du projet
-
-```
-bdd_supervisor/
-├── core/                      # Scripts principaux
-│   ├── supervisor.sh         # Point d'entrée CLI
-│   ├── manage_instance.sh    # Logique par instance
-│   └── utils.sh              # Fonctions utilitaires
-├── install/
-│   └── init_packages.sh      # Script optionnel pour dépendances
-├── templates/
-│   └── docker-compose.yml    # Template de base MySQL
-├── README.md                 # Documentation
-```
-
----
-
-## ⚙️ Installation & Initialisation
-
-```bash
-./core/supervisor.sh init
-```
-- Crée le dossier `~/.mysql-manager`
-- Initialise une base SQLite
-- Propose de créer une première instance (nom, mots de passe, etc.)
-
----
-
 ## 🛠️ Commandes disponibles
 
 ```bash
@@ -89,28 +61,17 @@ bdd_supervisor/
 ## 💡 Astuces & Bonnes pratiques
 
 - Utilisez un tunnel SSH ou VPN pour accéder à vos bases à distance
-- Intégrez vos backups dans une crontab pour automatiser
 - Évitez de supprimer le fichier SQLite sauf si vous repartez de zéro
 - Tous les ports sont entre 3300-3350 : vérifiez avec `docker ps`
 
 ---
 
-## 🚧 Limitations connues
+## 🚧 Limitations
 
 - Non multi-utilisateur (tout est stocké dans `~/.mysql-manager`)
 - Pas encore d'interface graphique ou d'API
 - Les erreurs Docker ne sont pas toutes capturées proprement
 - Ne gère que MySQL (MariaDB potentiellement compatible)
-
----
-
-## 📈 Roadmap
-
-- [ ] Interface web Flask optionnelle
-- [ ] Support PostgreSQL / Mongo
-- [ ] Amélioration des messages d'erreur
-- [ ] Export / import d'une configuration
-- [ ] Commande `doctor` pour diagnostic complet
 
 ---
 
