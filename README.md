@@ -19,15 +19,35 @@ Un outil en ligne de commande conçu pour créer, gérer, superviser et supprime
 ## 🛠️ Commandes disponibles
 
 ```bash
-./core/supervisor.sh init            # Initialise l'environnement
-./core/supervisor.sh create          # Crée une nouvelle instance
-./core/supervisor.sh start <nom>     # Démarre une instance
-./core/supervisor.sh stop <nom>      # Stoppe une instance
-./core/supervisor.sh purge <nom>     # Supprime instance + volume + config
-./core/supervisor.sh status <nom>    # Affiche l'état Docker d'une instance
-./core/supervisor.sh logs <nom>      # Affiche les logs live
-./core/supervisor.sh backup <nom>    # Effectue un export SQL de la base
-./core/supervisor.sh list            # Affiche les instances connues
+python -m bdd_supervisor init            # Initialise l'environnement
+python -m bdd_supervisor create          # Crée une nouvelle instance
+python -m bdd_supervisor start <nom>     # Démarre une instance
+python -m bdd_supervisor stop <nom>      # Stoppe une instance
+python -m bdd_supervisor purge <nom>     # Supprime instance + volume + config
+python -m bdd_supervisor status <nom>    # Affiche l'état Docker d'une instance
+python -m bdd_supervisor logs <nom>      # Affiche les logs live
+python -m bdd_supervisor backup <nom>    # Effectue un export SQL de la base
+python -m bdd_supervisor list            # Affiche les instances connues
+```
+
+---
+
+## 📁 Structure du projet
+
+```
+bdd_supervisor/
+    __init__.py
+    __main__.py
+    cli.py
+    core/
+        manage_instance.sh
+        supervisor.sh
+        utils.sh
+        schema.sql
+    install/
+        init_packages.sh
+    templates/
+        docker-compose.yml
 ```
 
 ---
@@ -44,7 +64,7 @@ Un outil en ligne de commande conçu pour créer, gérer, superviser et supprime
 ## 💾 Sauvegardes
 
 ```bash
-./core/supervisor.sh backup <nom>
+python -m bdd_supervisor backup <nom>
 ```
 - Génère un dump `.sql` dans `~/.mysql-manager/backups/`
 - Format horodaté : `nom_YYYY-MM-DD_HH-MM.sql`
@@ -81,13 +101,13 @@ Un outil en ligne de commande conçu pour créer, gérer, superviser et supprime
 Effectuez ces commandes dans l'ordre pour valider une instance :
 
 ```bash
-./core/supervisor.sh create
-./core/supervisor.sh start <nom>
-./core/supervisor.sh status <nom>
-./core/supervisor.sh logs <nom>
-./core/supervisor.sh backup <nom>
-./core/supervisor.sh stop <nom>
-./core/supervisor.sh purge <nom>
+python -m bdd_supervisor create
+python -m bdd_supervisor start <nom>
+python -m bdd_supervisor status <nom>
+python -m bdd_supervisor logs <nom>
+python -m bdd_supervisor backup <nom>
+python -m bdd_supervisor stop <nom>
+python -m bdd_supervisor purge <nom>
 ```
 
 ---
