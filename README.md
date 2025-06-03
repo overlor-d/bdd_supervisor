@@ -19,6 +19,7 @@ Un outil en ligne de commande conçu pour créer, gérer, superviser et supprime
 ## 🛠️ Commandes disponibles
 
 ```bash
+./core/supervisor.sh init            # Initialise l'environnement
 ./core/supervisor.sh create          # Crée une nouvelle instance
 ./core/supervisor.sh start <nom>     # Démarre une instance
 ./core/supervisor.sh stop <nom>      # Stoppe une instance
