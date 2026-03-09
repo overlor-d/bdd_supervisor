@@ -1,10 +1,10 @@
-# 🐳 MySQL Supervisor — Gestion dynamique d'instances MySQL via Docker
+# MySQL Supervisor — Gestion dynamique d'instances MySQL via Docker
 
 Un outil en ligne de commande conçu pour créer, gérer, superviser et supprimer facilement des bases de données MySQL dans des conteneurs Docker, sans interface web. Idéal pour les développeurs ou les équipes techniques souhaitant isoler et manipuler plusieurs bases sans conflits.
 
 ---
 
-## ✅ Fonctionnalités
+## Fonctionnalités
 
 - Déploiement d'instances MySQL isolées via Docker
 - Attribution dynamique de ports (pas de conflits)
@@ -16,7 +16,7 @@ Un outil en ligne de commande conçu pour créer, gérer, superviser et supprime
 
 ---
 
-## 🛠️ Commandes disponibles
+## Commandes disponibles
 
 ```bash
 python -m bdd_supervisor init            # Initialise l'environnement
@@ -32,7 +32,7 @@ python -m bdd_supervisor list            # Affiche les instances connues
 
 ---
 
-## 📁 Structure du projet
+## Structure du projet
 
 ```
 bdd_supervisor/
@@ -52,7 +52,7 @@ bdd_supervisor/
 
 ---
 
-## 🔐 Sécurité
+## Sécurité
 
 - Toutes les données sont locales : pas d'exposition réseau
 - Accès à la base uniquement via localhost ou tunnel SSH/VPN
@@ -61,7 +61,7 @@ bdd_supervisor/
 
 ---
 
-## 💾 Sauvegardes
+## Sauvegardes
 
 ```bash
 python -m bdd_supervisor backup <nom>
@@ -71,7 +71,7 @@ python -m bdd_supervisor backup <nom>
 
 ---
 
-## 📌 Dépendances
+## Dépendances
 
 - Docker & Docker Compose
 - SQLite3 (installé par défaut sur Linux)
@@ -79,7 +79,7 @@ python -m bdd_supervisor backup <nom>
 
 ---
 
-## 💡 Astuces & Bonnes pratiques
+## Astuces & Bonnes pratiques
 
 - Utilisez un tunnel SSH ou VPN pour accéder à vos bases à distance
 - Évitez de supprimer le fichier SQLite sauf si vous repartez de zéro
@@ -87,7 +87,7 @@ python -m bdd_supervisor backup <nom>
 
 ---
 
-## 🚧 Limitations
+## Limitations
 
 - Non multi-utilisateur (tout est stocké dans `~/.mysql-manager`)
 - Pas encore d'interface graphique ou d'API
@@ -96,7 +96,7 @@ python -m bdd_supervisor backup <nom>
 
 ---
 
-## 🧪 Tests
+## Tests
 
 Effectuez ces commandes dans l'ordre pour valider une instance :
 
@@ -112,7 +112,7 @@ python -m bdd_supervisor purge <nom>
 
 ---
 
-## 🧠 Contributeurs
+## Contributeurs
 
 Projet développé pour simplifier la gestion d'environnements MySQL temporaires, reproductibles et isolés via Docker.
 
